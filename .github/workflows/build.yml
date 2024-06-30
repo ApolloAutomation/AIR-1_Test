@@ -12,7 +12,7 @@ env:
   DEVICE_NAME: AIR-1
 jobs:
   build:
-    name: ${{ env.DEVICE_NAME }}
+    name: Build And Release
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
