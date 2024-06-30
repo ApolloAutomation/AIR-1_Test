@@ -38,17 +38,15 @@ jobs:
           mv ${{ steps.esphome-build.outputs.name }}/* output/
           echo ${{ steps.esphome-build.outputs.version }} > output/version
           
-          # Extract MD5 checksum of ${{ env.DEVICE_NAME }}-esp32c3.ota.bin
+          # Extract MD5 checksum of firmware.ota.bin
           MD5_CHECKSUM=$(md5sum output/apollo-${{ env.DEVICE_NAME }}-esp32c3.ota.bin | awk '{ print $1 }')
           echo "MD5_CHECKSUM=$MD5_CHECKSUM" >> $GITHUB_ENV
 
-          # Update manifest.json with jq
-          jq --arg name "${{ env.DEVICE_NAME }}" \
-             --arg version "${{ env.project_version }}" \
-             --arg md5 "$MD5_CHECKSUM" \
-             '.name = $name | .version = $version | .home_assistant_domain = "esphome" | .new_install_prompt_erase = false | .builds = [{chipFamily: "ESP32-C3", parts: [{path: "apollo-${{ env.DEVICE_NAME }}-esp32c3.factory.bin", offset: 0}], ota: {path: "apollo-${{ env.DEVICE_NAME }}-esp32c3.ota.bin", md5: $md5}}]' \
-             output/manifest.json > output/manifest_temp.json
-          mv output/manifest_temp.json output/manifest.json
+          # Create new manifest.json with jq
+          jq -n --arg name "${{ env.DEVICE_NAME }}" \
+                 --arg version "${{ env.project_version }}" \
+                 --arg md5 "$MD5_CHECKSUM" \
+                 '{name: $name, version: $version, home_assistant_domain: "esphome", new_install_prompt_erase: false, builds: [{chipFamily: "ESP32-C3", parts: [{path: "apollo-${{ env.DEVICE_NAME }}-esp32c3.factory.bin", offset: 0}], ota: {path: "apollo-${{ env.DEVICE_NAME }}-esp32c3.ota.bin", md5: $md5}}]}' > output/manifest.json
       - uses: actions/upload-artifact@v4.3.3
         with:
           name: build-${{ env.DEVICE_NAME }}
