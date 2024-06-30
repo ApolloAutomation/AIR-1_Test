@@ -8,13 +8,12 @@ on:
   pull_request:
   schedule:
     - cron: "0 5 * * 1"
-    
+env:
+  DEVICE_NAME: AIR-1
 jobs:
   build:
     name: ${{ env.DEVICE_NAME }}
     runs-on: ubuntu-latest
-    env:
-      DEVICE_NAME: AIR-1
     steps:
       - uses: actions/checkout@v4
       - name: Build Firmware
