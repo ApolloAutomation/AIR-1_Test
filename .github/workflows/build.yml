@@ -1,6 +1,6 @@
 name: Build
 env:
-  DEVICE_NAME: AIR-1
+  DEVICE_NAME: air-1
   RELEASE_URL: ${{ github.server_url }}/${{ github.repository }}/releases/latest
 
 on:
@@ -31,15 +31,15 @@ jobs:
         run: |
           version=$(awk '/substitutions:/ {found=1} found && /version:/ {print $2; exit}' Integrations/ESPHome/${{ env.DEVICE_NAME }}.yaml | tr -d '"')
           echo "project_version=$version" >> $GITHUB_ENV
-
+      
       - name: Move generated files to output
         run: |
           mkdir -p output
           mv ${{ steps.esphome-build.outputs.name }}/* output/
           echo ${{ steps.esphome-build.outputs.version }} > output/version
-          
           # Extract MD5 checksum of firmware.ota.bin
-          MD5_CHECKSUM=$(md5sum output/apollo-${{ env.DEVICE_NAME }}-esp32c3.ota.bin | awk '{ print $1 }')
+          MD5_CHECKSUM=$(awk 'md5 {print $2; exit}' output/apollo-${{ env.DEVICE_NAME }}-esp32c3.ota.bin | tr -d '"')
+
           echo "MD5_CHECKSUM=$MD5_CHECKSUM" >> $GITHUB_ENV
 
           # Create new manifest.json with jq
