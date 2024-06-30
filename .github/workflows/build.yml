@@ -1,4 +1,7 @@
 name: Build
+env:
+  DEVICE_NAME: AIR-1
+  RELEASE_URL: ${{ github.server_url }}/${{ github.repository }}/releases/latest
 
 on:
   push:
@@ -8,8 +11,7 @@ on:
   pull_request:
   schedule:
     - cron: "0 5 * * 1"
-env:
-  DEVICE_NAME: AIR-1
+
 jobs:
   build:
     name: Build And Release
@@ -26,61 +28,58 @@ jobs:
       - name: Move generated files to output
         run: |
           mkdir -p output/${{ env.DEVICE_NAME }}
-          mv ${{ steps.esphome-build.outputs.name }}/* output/${{ env.DEVICE_NAME }}/
-          echo ${{ steps.esphome-build.outputs.version }} > output/${{ env.DEVICE_NAME }}/version
-      
-      
-      - name: Extract version number from yaml
-        id: extract_version
+          mv ${{ steps.esphome-build.outputs.name }}/* output/
+          echo ${{ steps.esphome-build.outputs.version }} > output/version
+      - name: Read version from YAML file
+        id: read_version
         run: |
-          # Extract the version number using grep and sed
-          VERSION=$(grep 'version:' Integrations/ESPHome/${{ env.DEVICE_NAME }}.yaml | sed 's/version: "\(.*\)"/\1/')
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          version=$(grep 'project_version:' Integrations/ESPHome/${{ env.DEVICE_NAME }}.yaml | awk '{print $2}' | tr -d '"')
+          echo "project_version=$version" >> $GITHUB_ENV
   
-      - name: Generate MD5 checksum for firmware.ota.bin
-        id: generate_md5
+      - name: Update Manifest Version
         run: |
-          # Generate MD5 checksum
-          MD5_CHECKSUM=$(md5sum output/${{ env.DEVICE_NAME }}/firmware.ota.bin | awk '{ print $1 }')
-          echo "MD5_CHECKSUM=$MD5_CHECKSUM" >> $GITHUB_ENV
-  
-      - name: Update version and MD5 in manifest.json
-        run: |
-          # Use jq to update the version and MD5 in manifest.json
-          jq --arg version "$VERSION" --arg md5 "$MD5_CHECKSUM" \
-            '.version = $version | .builds[].ota.md5 = $md5' \
-            output/${{ env.DEVICE_NAME }}/manifest.json > output/${{ env.DEVICE_NAME }}/manifest_temp.json
-          mv output/${{ env.DEVICE_NAME }}/manifest_temp.json output/${{ env.DEVICE_NAME }}/manifest.json
-      
+          mkdir output
+          mv ${{ steps.esphome-build.outputs.name }} output/
+          jq -s "{\"name\": \"${{ env.DEVICE_NAME }}\", \"version\": \"${{ env.project_version }}\", \"home_assistant_domain\": \"esphome\", \"new_install_prompt_erase\": false, \"builds\":.}" output/${{ steps.esphome-build.outputs.name }}/manifest.json > output/manifest.json
+
+      - uses: actions/upload-artifact@v4.3.3
+        with:
+          name: build-${{ env.DEVICE_NAME }}
+          path: output
+          retention-days: 1
+
+
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ env.VERSION }}
-          release_name: "Release ${{ env.VERSION }}"
-          body: "Release of version ${{ env.VERSION }}"
+          tag_name: ${{ env.project_version }}
+          release_name: "Release ${{ env.project_version }}"
+          body: "Release of version ${{ env.project_version }}"
           draft: false
           prerelease: false
   
       - name: Upload firmware.factory.bin to Release
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: output/AIR-1/firmware-factory.bin
+          asset_path: output/${{ env.DEVICE_NAME }}/firmware-factory.bin
           asset_name: firmware-factory.bin
           asset_content_type: application/octet-stream
 
       - name: Upload firmware.ota.bin to Release
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: output/AIR-1/firmware.ota.bin
+          asset_path: output/${{ env.DEVICE_NAME }}/firmware.ota.bin
           asset_name: firmware.ota.bin
           asset_content_type: application/octet-stream
       
