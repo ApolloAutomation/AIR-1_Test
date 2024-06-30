@@ -39,14 +39,14 @@ jobs:
           echo ${{ steps.esphome-build.outputs.version }} > output/version
           
           # Extract MD5 checksum of ${{ env.DEVICE_NAME }}-esp32c3.ota.bin
-          MD5_CHECKSUM=$(md5sum output/${{ env.DEVICE_NAME }}-esp32c3.ota.bin | awk '{ print $1 }')
+          MD5_CHECKSUM=$(md5sum output/apollo-${{ env.DEVICE_NAME }}-esp32c3.ota.bin | awk '{ print $1 }')
           echo "MD5_CHECKSUM=$MD5_CHECKSUM" >> $GITHUB_ENV
 
           # Update manifest.json with jq
           jq --arg name "${{ env.DEVICE_NAME }}" \
              --arg version "${{ env.project_version }}" \
              --arg md5 "$MD5_CHECKSUM" \
-             '.name = $name | .version = $version | .home_assistant_domain = "esphome" | .new_install_prompt_erase = false | .builds = [{chipFamily: "ESP32-C3", parts: [{path: "${{ env.DEVICE_NAME }}-esp32c3.factory.bin", offset: 0}], ota: {path: "${{ env.DEVICE_NAME }}-esp32c3.ota.bin", md5: $md5}}]' \
+             '.name = $name | .version = $version | .home_assistant_domain = "esphome" | .new_install_prompt_erase = false | .builds = [{chipFamily: "ESP32-C3", parts: [{path: "apollo-${{ env.DEVICE_NAME }}-esp32c3.factory.bin", offset: 0}], ota: {path: "apollo-${{ env.DEVICE_NAME }}-esp32c3.ota.bin", md5: $md5}}]' \
              output/manifest.json > output/manifest_temp.json
           mv output/manifest_temp.json output/manifest.json
       - uses: actions/upload-artifact@v4.3.3
@@ -76,8 +76,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: output/${{ env.DEVICE_NAME }}-esp32c3.factory.bin
-          asset_name: ${{ env.DEVICE_NAME }}-esp32c3.factory.bin
+          asset_path: output/apollo-${{ env.DEVICE_NAME }}-esp32c3.factory.bin
+          asset_name: apollo-${{ env.DEVICE_NAME }}-esp32c3.factory.bin
           asset_content_type: application/octet-stream
 
       - name: Upload firmware.ota.bin to Release
@@ -87,8 +87,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: output/${{ env.DEVICE_NAME }}-esp32c3.ota.bin
-          asset_name: ${{ env.DEVICE_NAME }}-esp32c3.ota.bin
+          asset_path: output/apollo-${{ env.DEVICE_NAME }}-esp32c3.ota.bin
+          asset_name: apollo-${{ env.DEVICE_NAME }}-esp32c3.ota.bin
           asset_content_type: application/octet-stream
       
       
