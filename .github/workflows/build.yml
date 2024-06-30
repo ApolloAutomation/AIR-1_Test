@@ -74,7 +74,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: output/apollo-${{ env.DEVICE_NAME }}-esp32c3.factory.bin
+          asset_path: apollo-${{ env.DEVICE_NAME }}-esp32c3.factory.bin
           asset_name: apollo-${{ env.DEVICE_NAME }}-esp32c3.factory.bin
           asset_content_type: application/octet-stream
 
@@ -85,7 +85,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: output/apollo-${{ env.DEVICE_NAME }}-esp32c3.ota.bin
+          asset_path: apollo-${{ env.DEVICE_NAME }}-esp32c3.ota.bin
           asset_name: apollo-${{ env.DEVICE_NAME }}-esp32c3.ota.bin
           asset_content_type: application/octet-stream
       
