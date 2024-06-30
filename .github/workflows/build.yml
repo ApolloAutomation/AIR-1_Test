@@ -1,0 +1,111 @@
+name: Build
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+  pull_request:
+  schedule:
+    - cron: "0 5 * * 1"
+    
+jobs:
+  build:
+    name: ${{ env.DEVICE_NAME }}
+    runs-on: ubuntu-latest
+    env:
+      DEVICE_NAME: AIR-1
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build Firmware
+        uses: esphome/build-action@v3.0.0
+        id: esphome-build
+        with:
+          yaml_file: Integrations/ESPHome/${{ env.DEVICE_NAME }}.yaml
+          version: 'latest'
+          cache: true
+      - name: Move generated files to output
+        run: |
+          mkdir -p output/${{ env.DEVICE_NAME }}
+          mv ${{ steps.esphome-build.outputs.name }}/* output/${{ env.DEVICE_NAME }}/
+          echo ${{ steps.esphome-build.outputs.version }} > output/${{ env.DEVICE_NAME }}/version
+      
+      
+      - name: Extract version number from yaml
+        id: extract_version
+        run: |
+          # Extract the version number using grep and sed
+          VERSION=$(grep 'version:' Integrations/ESPHome/${{ env.DEVICE_NAME }}.yaml | sed 's/version: "\(.*\)"/\1/')
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+  
+      - name: Generate MD5 checksum for firmware.ota.bin
+        id: generate_md5
+        run: |
+          # Generate MD5 checksum
+          MD5_CHECKSUM=$(md5sum output/${{ env.DEVICE_NAME }}/firmware.ota.bin | awk '{ print $1 }')
+          echo "MD5_CHECKSUM=$MD5_CHECKSUM" >> $GITHUB_ENV
+  
+      - name: Update version and MD5 in manifest.json
+        run: |
+          # Use jq to update the version and MD5 in manifest.json
+          jq --arg version "$VERSION" --arg md5 "$MD5_CHECKSUM" \
+            '.version = $version | .builds[].ota.md5 = $md5' \
+            output/${{ env.DEVICE_NAME }}/manifest.json > output/${{ env.DEVICE_NAME }}/manifest_temp.json
+          mv output/${{ env.DEVICE_NAME }}/manifest_temp.json output/${{ env.DEVICE_NAME }}/manifest.json
+      
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ env.VERSION }}
+          release_name: "Release ${{ env.VERSION }}"
+          body: "Release of version ${{ env.VERSION }}"
+          draft: false
+          prerelease: false
+  
+      - name: Upload firmware.factory.bin to Release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: output/AIR-1/firmware-factory.bin
+          asset_name: firmware-factory.bin
+          asset_content_type: application/octet-stream
+
+      - name: Upload firmware.ota.bin to Release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: output/AIR-1/firmware.ota.bin
+          asset_name: firmware.ota.bin
+          asset_content_type: application/octet-stream
+      
+      
+      - uses: actions/upload-artifact@v4.3.3
+        with:
+          name: build-${{ env.DEVICE_NAME }}
+          path: output
+          retention-days: 5
+
+  deploy:
+    if: contains(fromJSON('["workflow_dispatch", "push", "schedule"]'), github.event_name) && github.ref == 'refs/heads/main'
+    name: Deploy to GitHub Pages
+    runs-on: ubuntu-latest
+    needs: build
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4.0.5
