@@ -87,9 +87,19 @@ jobs:
           asset_path: output/apollo-${{ env.DEVICE_NAME }}-esp32c3.ota.bin
           asset_name: apollo-${{ env.DEVICE_NAME }}-esp32c3.ota.bin
           asset_content_type: application/octet-stream
+      - name: Upload firmware.ota.bin to Release
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: output/manifest.json
+          asset_name: manifest.json
+          asset_content_type: application/octet-stream
 
   deploy:
-    if: contains(fromJSON('["workflow_dispatch", "schedule"]'), github.event_name) && github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    if: contains(fromJSON('["workflow_dispatch", "push", "schedule"]'), github.event_name) && github.ref == 'refs/heads/main'
     name: Deploy to GitHub Pages
     runs-on: ubuntu-latest
     needs: build
