@@ -34,6 +34,7 @@ jobs:
 
       - name: Move generated files to output
         run: |
+          mkdir output
           mv ${{ steps.esphome-build.outputs.name }}/* output/
           echo ${{ steps.esphome-build.outputs.version }} > output/version
           jq -s "{\"name\": \"${{ env.DEVICE_NAME }}\", \"version\": \"${{ env.project_version }}\", \"home_assistant_domain\": \"esphome\", \"new_install_prompt_erase\": false, \"builds\":.}" output/manifest.json > output/manifest.json
