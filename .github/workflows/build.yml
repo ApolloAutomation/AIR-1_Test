@@ -29,16 +29,25 @@ jobs:
       - name: Read version from YAML file
         id: read_version
         run: |
-          version=$(grep 'project_version:' Integrations/ESPHome/${{ env.DEVICE_NAME }}.yaml | awk '{print $2}' | tr -d '"')
+          version=$(grep 'substitutions_version:' Integrations/ESPHome/${{ env.DEVICE_NAME }}.yaml | awk '{print $2}' | tr -d '"')
           echo "project_version=$version" >> $GITHUB_ENV
 
       - name: Move generated files to output
         run: |
-          mkdir output
+          mkdir -p output
           mv ${{ steps.esphome-build.outputs.name }}/* output/
           echo ${{ steps.esphome-build.outputs.version }} > output/version
-          jq -s "{\"name\": \"${{ env.DEVICE_NAME }}\", \"version\": \"${{ env.project_version }}\", \"home_assistant_domain\": \"esphome\", \"new_install_prompt_erase\": false, \"builds\":.}" output/manifest.json > output/manifest.json
-
+          
+          # Extract MD5 checksum of firmware.ota.bin
+          MD5_CHECKSUM=$(md5sum output/firmware.ota.bin | awk '{ print $1 }')
+          
+          # Update manifest.json with jq
+          jq --arg name "${{ env.DEVICE_NAME }}" \
+              --arg version "${{ env.project_version }}" \
+              --arg md5 "$MD5_CHECKSUM" \
+              '. | {name: $name, version: $version, home_assistant_domain: "esphome", new_install_prompt_erase: false, builds: [{chipFamily: "ESP32-C3", parts: [{path: "firmware-factory.bin", offset: 0}]}, {chipFamily: "ESP32-C3", ota: {path: "firmware.ota.bin", md5: $md5}}]}' \
+              output/manifest.json > output/manifest_temp.json
+          mv output/manifest_temp.json output/manifest.json
       - uses: actions/upload-artifact@v4.3.3
         with:
           name: build-${{ env.DEVICE_NAME }}
