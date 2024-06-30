@@ -87,16 +87,9 @@ jobs:
           asset_path: output/apollo-${{ env.DEVICE_NAME }}-esp32c3.ota.bin
           asset_name: apollo-${{ env.DEVICE_NAME }}-esp32c3.ota.bin
           asset_content_type: application/octet-stream
-      
-      
-      - uses: actions/upload-artifact@v4.3.3
-        with:
-          name: build-${{ env.DEVICE_NAME }}
-          path: output
-          retention-days: 5
 
   deploy:
-    if: contains(fromJSON('["workflow_dispatch", "push", "schedule"]'), github.event_name) && github.ref == 'refs/heads/main'
+    if: contains(fromJSON('["workflow_dispatch", "schedule"]'), github.event_name) && github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     name: Deploy to GitHub Pages
     runs-on: ubuntu-latest
     needs: build
