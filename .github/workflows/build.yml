@@ -25,22 +25,18 @@ jobs:
           yaml_file: Integrations/ESPHome/${{ env.DEVICE_NAME }}.yaml
           version: 'latest'
           cache: true
-      - name: Move generated files to output
-        run: |
-          mkdir -p output/${{ env.DEVICE_NAME }}
-          mv ${{ steps.esphome-build.outputs.name }}/* output/
-          echo ${{ steps.esphome-build.outputs.version }} > output/version
+
       - name: Read version from YAML file
         id: read_version
         run: |
           version=$(grep 'project_version:' Integrations/ESPHome/${{ env.DEVICE_NAME }}.yaml | awk '{print $2}' | tr -d '"')
           echo "project_version=$version" >> $GITHUB_ENV
-  
-      - name: Update Manifest Version
+
+      - name: Move generated files to output
         run: |
-          mkdir output
-          mv ${{ steps.esphome-build.outputs.name }} output/
-          jq -s "{\"name\": \"${{ env.DEVICE_NAME }}\", \"version\": \"${{ env.project_version }}\", \"home_assistant_domain\": \"esphome\", \"new_install_prompt_erase\": false, \"builds\":.}" output/${{ steps.esphome-build.outputs.name }}/manifest.json > output/manifest.json
+          mv ${{ steps.esphome-build.outputs.name }}/* output/
+          echo ${{ steps.esphome-build.outputs.version }} > output/version
+          jq -s "{\"name\": \"${{ env.DEVICE_NAME }}\", \"version\": \"${{ env.project_version }}\", \"home_assistant_domain\": \"esphome\", \"new_install_prompt_erase\": false, \"builds\":.}" output/manifest.json > output/manifest.json
 
       - uses: actions/upload-artifact@v4.3.3
         with:
@@ -50,6 +46,7 @@ jobs:
 
 
       - name: Create Release
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
         id: create_release
         uses: actions/create-release@v1
         env:
