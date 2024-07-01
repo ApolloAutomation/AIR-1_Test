@@ -58,7 +58,7 @@ jobs:
           echo "PR_TITLE=$pr_title" >> $GITHUB_ENV
           echo "PR_BODY=$pr_body" >> $GITHUB_ENV
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
 
       - name: Create Release
         if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
