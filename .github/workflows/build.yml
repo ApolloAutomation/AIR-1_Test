@@ -1,4 +1,4 @@
-name: Build
+name: Build and Deploy
 env:
   DEVICE_NAME: air-1
   RELEASE_URL: ${{ github.server_url }}/${{ github.repository }}/releases/latest
@@ -18,6 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - name: Build Firmware
         uses: esphome/build-action@v3.0.0
         id: esphome-build
@@ -37,17 +38,22 @@ jobs:
           mkdir -p output
           mv ${{ steps.esphome-build.outputs.name }}/* output/
           echo ${{ steps.esphome-build.outputs.version }} > output/version
+          
           # Extract MD5 checksum of firmware.ota.bin
-          MD5_CHECKSUM=$(jq -r '.ota.md5' output/manifest.json)
+          MD5_CHECKSUM=$(md5sum output/apollo-${{ env.DEVICE_NAME }}-esp32c3.ota.bin | awk '{ print $1 }')
           echo "MD5_CHECKSUM=$MD5_CHECKSUM" >> $GITHUB_ENV
 
           # Create new manifest.json with jq
           jq -n --arg name "${{ env.DEVICE_NAME }}" \
                  --arg version "${{ env.project_version }}" \
                  --arg md5 "$MD5_CHECKSUM" \
-                 '{name: $name, version: $version, home_assistant_domain: "esphome", new_install_prompt_erase: false, builds: [{chipFamily: "ESP32-C3", parts: [{path: "apollo-${{ env.DEVICE_NAME }}-esp32c3.factory.bin", offset: 0}], ota: {path: "apollo-${{ env.DEVICE_NAME }}-esp32c3.ota.bin", md5: $md5}}]}' > output/manifest.json
-      
-      - uses: actions/upload-artifact@v4.3.3
+                 '{name: $name, version: $version, home_assistant_domain: "esphome", new_install_prompt_erase: false, builds: [{chipFamily: "ESP32-C3", parts: [{path: "apollo-${{ env.DEVICE_NAME }}-esp32c3.factory.bin", offset: 0}], ota: {path: "apollo-${ env.DEVICE_NAME }}-esp32c3.ota.bin", md5: $md5}}]}' > output/manifest.json
+
+      - name: Ensure no symlinks or hard links
+        run: |
+          find output/ -type l -exec rm -f {} \;
+
+      - uses: actions/upload-artifact@v4
         with:
           name: github-pages
           path: output/
@@ -87,7 +93,8 @@ jobs:
           asset_path: output/apollo-${{ env.DEVICE_NAME }}-esp32c3.ota.bin
           asset_name: apollo-${{ env.DEVICE_NAME }}-esp32c3.ota.bin
           asset_content_type: application/octet-stream
-      - name: Upload firmware.ota.bin to Release
+
+      - name: Upload manifest.json to Release
         if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
         uses: actions/upload-release-asset@v1
         env:
@@ -99,10 +106,9 @@ jobs:
           asset_content_type: application/octet-stream
 
   deploy:
-    if: contains(fromJSON('["workflow_dispatch", "push", "schedule"]'), github.event_name) && github.ref == 'refs/heads/main'
-    name: Deploy to GitHub Pages
-    runs-on: ubuntu-latest
     needs: build
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
     permissions:
       pages: write
       id-token: write
@@ -110,8 +116,21 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: github-pages
+          path: docs/
+
       - name: Setup Pages
         uses: actions/configure-pages@v4
+
+      - name: Ensure no symlinks or hard links
+        run: |
+          find docs/ -type l -exec rm -f {} \;
 
       - name: Deploy to GitHub Pages
         id: deployment
