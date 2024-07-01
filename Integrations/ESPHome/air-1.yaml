@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: apollo-air-1
-  version: "24.7.1.2"
+  version: "24.7.1.3"
   device_description: ${name} made by Apollo Automation - version ${version}.
 
 esphome:
@@ -295,7 +295,7 @@ sensor:
 light:
   - platform: esp32_rmt_led_strip
     id: rgb_light
-    name: "RGB Light New"
+    name: "RGB Light New 2"
     pin: GPIO3
     rmt_channel: 0
     default_transition_length: 0s
