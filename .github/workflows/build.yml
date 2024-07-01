@@ -45,7 +45,7 @@ jobs:
           jq -n --arg name "${{ env.DEVICE_NAME }}" \
                  --arg version "${{ env.project_version }}" \
                  --arg md5 "$MD5_CHECKSUM" \
-                 '{name: $name, version: $version, home_assistant_domain: "esphome", new_install_prompt_erase: false, builds: [{chipFamily: "ESP32-C3", parts: [{path: "apollo-$name-esp32c3.factory.bin", offset: 0}], ota: {path: "apollo-$name-esp32c3.ota.bin", md5: $md5}}]}' > output/manifest.json
+                 '{name: $name, version: $version, home_assistant_domain: "esphome", new_install_prompt_erase: false, builds: [{chipFamily: "ESP32-C3", parts: [{path: "apollo-${{ env.DEVICE_NAME }}-esp32c3.factory.bin", offset: 0}], ota: {path: "apollo-${{ env.DEVICE_NAME }}-esp32c3.ota.bin", md5: $md5}}]}' > output/manifest.json
       
       - uses: actions/upload-artifact@v4.3.3
         with:
@@ -111,8 +111,7 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Setup Pages
-        uses: actions/configure-pages@v4
-
+        uses: actions/configure-pages@v5
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4.0.5
