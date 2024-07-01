@@ -50,7 +50,7 @@ jobs:
 
       - uses: actions/upload-artifact@v4.3.3
         with:
-          path: files/
+          path: output/
           retention-days: 1
 
       - name: Create Release
@@ -108,7 +108,6 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4.1.7
         with:
-          pattern: "!build-*"
           path: output
       - run: cp -R static/* output/
       - uses: actions/upload-pages-artifact@v3.0.1
