@@ -53,11 +53,16 @@ jobs:
           path: output/
           retention-days: 1
 
-      - name: Collect merge commits
-        id: collect_commits
+      - name: Fetch latest merged PR
+        id: fetch_pr
         run: |
-          MERGE_COMMITS=$(git log --merges --pretty=format:"%h %s" $(git describe --tags --abbrev=0 @^)..@)
-          echo "MERGE_COMMITS=$MERGE_COMMITS" >> $GITHUB_ENV
+          pr_info=$(gh pr list --state merged --json title,body --limit 1)
+          pr_title=$(echo "$pr_info" | jq -r '.[0].title')
+          pr_body=$(echo "$pr_info" | jq -r '.[0].body')
+          echo "PR_TITLE=$pr_title" >> $GITHUB_ENV
+          echo "PR_BODY=$pr_body" >> $GITHUB_ENV
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create Release
         if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
@@ -68,11 +73,7 @@ jobs:
         with:
           tag_name: ${{ env.project_version }}
           release_name: "Release ${{ env.project_version }}"
-          body: |
-            Release of version ${{ env.PROJECT_VERSION }}
-
-            Merge commits:
-            ${{ env.MERGE_COMMITS }}
+          body: ${{ env.PR_BODY }}
           draft: false
           prerelease: false
   
