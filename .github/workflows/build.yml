@@ -53,6 +53,12 @@ jobs:
           path: output/
           retention-days: 1
 
+      - name: Collect merge commits
+        id: collect_commits
+        run: |
+          MERGE_COMMITS=$(git log --merges --pretty=format:"%h %s" $(git describe --tags --abbrev=0 @^)..@)
+          echo "MERGE_COMMITS=$MERGE_COMMITS" >> $GITHUB_ENV
+
       - name: Create Release
         if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
         id: create_release
@@ -62,7 +68,11 @@ jobs:
         with:
           tag_name: ${{ env.project_version }}
           release_name: "Release ${{ env.project_version }}"
-          body: Release of version ${{ env.project_version }}
+          body: |
+            Release of version ${{ env.PROJECT_VERSION }}
+
+            Merge commits:
+            ${{ env.MERGE_COMMITS }}
           draft: false
           prerelease: false
   
