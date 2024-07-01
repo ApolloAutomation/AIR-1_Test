@@ -1,7 +1,7 @@
 #Define Project
 substitutions:
   name: apollo-air-1
-  version: "24.6.20.2"
+  version: "24.7.1.1"
   device_description: ${name} made by Apollo Automation - version ${version}.
 
 esphome:
@@ -25,7 +25,7 @@ esp32:
     type: arduino
 
 dashboard_import:
-  package_import_url: github://ApolloAutomation/AIR-1/Integrations/ESPHome/AIR-1.yaml
+  package_import_url: github://ApolloAutomation/AIR-1_Test/Integrations/ESPHome/air-1.yaml
   import_full_config: false
 
 globals:
@@ -60,6 +60,22 @@ api:
 ota:
   - platform: esphome
     password: "apolloautomation"
+    id: ota_default
+  - platform: http_request
+    id: ota_managed
+
+http_request:
+  useragent: esphome/device
+  timeout: 10s
+  verify_ssl: false
+
+update:
+  - platform: http_request
+    id: firmware_update
+    name: Firmware Update
+    source: https://apolloautomation.github.io/AIR-1_Test/artifact/manifest.json
+    update_interval: 60s
+
 
 
 wifi:

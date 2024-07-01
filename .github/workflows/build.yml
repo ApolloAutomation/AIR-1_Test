@@ -64,11 +64,8 @@ jobs:
         with:
           tag_name: ${{ env.project_version }}
           release_name: "Release ${{ env.project_version }}"
-          body: |
-            Release of version ${{ env.PROJECT_VERSION }}
+          body: Release of version ${{ env.project_version }}
 
-            Merge commits:
-            ${{ env.MERGE_COMMITS }}
           draft: false
           prerelease: false
   
