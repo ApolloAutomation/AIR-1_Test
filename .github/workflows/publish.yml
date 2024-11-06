@@ -77,12 +77,6 @@ jobs:
           name: firmware-b
           path: firmware-b
 
-      # Zip the firmware artifacts for release
-      - name: Zip firmware artifacts
-        run: |
-          zip -r firmware.zip firmware/
-          zip -r firmware-b.zip firmware-b/
-
       # Get the last merged PR's body for the release notes
       - name: Fetch Last Merged PR Body
         id: last_pr
@@ -107,26 +101,27 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # Upload the zip files to the release
-      - name: Upload Firmware Artifacts to Release
-        uses: actions/upload-release-asset@v1
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: firmware.zip
-          asset_name: firmware.zip
-          asset_content_type: application/zip
+      # Upload each file in firmware folder
+      - name: Upload Firmware Files to Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          for file in $(find firmware -type f); do
+            filename=$(basename "$file")
+            echo "Uploading $filename from firmware directory"
+            gh release upload "${{ steps.create_release.outputs.upload_url }}" "$file" --clobber --repo ${{ github.repository }} --name "$filename"
+          done
 
-      - name: Upload Firmware-B Artifacts to Release
-        uses: actions/upload-release-asset@v1
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: firmware-b.zip
-          asset_name: firmware-b.zip
-          asset_content_type: application/zip
+      # Upload each file in firmware-b folder
+      - name: Upload Firmware-B Files to Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          for file in $(find firmware-b -type f); do
+            filename=$(basename "$file")
+            echo "Uploading $filename from firmware-b directory"
+            gh release upload "${{ steps.create_release.outputs.upload_url }}" "$file" --clobber --repo ${{ github.repository }} --name "$filename"
+          done
 
       - uses: actions/download-artifact@v4.1.8
         with:
