@@ -90,7 +90,7 @@ rtttl:
 
 number:
   - platform: template
-    name: Air Temperature Offset4
+    name: Air Temperature Offset
     id: aht_temperature_offset
     restore_value: true
     initial_value: 0.0
@@ -216,7 +216,7 @@ sensor:
     entity_category: "diagnostic"
 
   - platform: dallas_temp
-    name: "Soil Temperature2"
+    name: "Soil Temperature"
     update_interval: 60s
     device_class: temperature
     id: soil_temperature
