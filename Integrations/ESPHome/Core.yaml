@@ -1,6 +1,6 @@
 substitutions:
   name: apollo-plt-1
-  version: "24.10.25.1"
+  version: "24.11.6.1"
   device_description: ${name} made by Apollo Automation - version ${version}.
 
 esp32:
@@ -218,7 +218,7 @@ sensor:
     entity_category: "diagnostic"
 
   - platform: dallas_temp
-    name: "Soil Temperature"
+    name: "Soil Temperature2"
     update_interval: 60s
     device_class: temperature
     id: soil_temperature
