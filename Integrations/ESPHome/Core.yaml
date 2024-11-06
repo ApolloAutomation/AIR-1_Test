@@ -1,7 +1,5 @@
 substitutions:
-  name: apollo-plt-1
-  version: "24.11.6.1"
-  device_description: ${name} made by Apollo Automation - version ${version}.
+  version: "24.11.6.3"
 
 esp32:
   board: esp32-c3-devkitm-1
@@ -92,7 +90,7 @@ rtttl:
 
 number:
   - platform: template
-    name: Air Temperature Offset
+    name: Air Temperature Offset4
     id: aht_temperature_offset
     restore_value: true
     initial_value: 0.0
