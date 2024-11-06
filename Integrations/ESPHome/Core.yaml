@@ -90,7 +90,7 @@ rtttl:
 
 number:
   - platform: template
-    name: Air Temperature Offset
+    name: Air Temperature Offset1
     id: aht_temperature_offset
     restore_value: true
     initial_value: 0.0
