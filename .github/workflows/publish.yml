@@ -115,11 +115,10 @@ jobs:
     name: Publish to GitHub Pages and Create Release
     runs-on: ubuntu-latest
     needs:
-      - check-for-yaml
-      - read-version
+      - build-site
       - build-firmware
       - build-firmware-b
-    if: needs.check-for-yaml.outputs.yaml_changed == 'true'
+    if: needs.check-for-yaml.outputs.yaml_changed == 'true' && ${{ github.run_attempt == 1 }}
     permissions:
       contents: write
       pages: write
@@ -131,11 +130,11 @@ jobs:
       - uses: actions/download-artifact@v4.1.8
         with:
           name: firmware
-          path: firmware
+          path: ./consolidated_artifacts/firmware
       - uses: actions/download-artifact@v4.1.8
         with:
           name: firmware-b
-          path: firmware-b
+          path: ./consolidated_artifacts/firmware-b
 
       # Get the last merged PR's body for the release notes
       - name: Fetch Last Merged PR Body
@@ -166,21 +165,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          for file in $(find firmware -type f); do
-            filename=$(basename "$file")
-            echo "Uploading $filename from firmware directory"
-            gh release upload "${{ steps.create_release.outputs.upload_url }}" "$file" --clobber --repo ${{ github.repository }} --name "$filename"
-          done
-
-      # Upload each file in firmware-b folder
-      - name: Upload Firmware-B Files to Release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          for file in $(find firmware-b -type f); do
-            filename=$(basename "$file")
-            echo "Uploading $filename from firmware-b directory"
-            gh release upload "${{ steps.create_release.outputs.upload_url }}" "$file" --clobber --repo ${{ github.repository }} --name "$filename"
+          for file in $(find ./consolidated_artifacts -type f); do
+            echo "Uploading $(basename "$file")"
+            gh release upload "${{ steps.create_release.outputs.upload_url }}" "$file" --clobber --repo ${{ github.repository }}
           done
 
       - uses: actions/download-artifact@v4.1.8
