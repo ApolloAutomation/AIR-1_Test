@@ -157,7 +157,7 @@ jobs:
           for file in $(find firmware -type f); do
             filename=$(basename "$file")
             echo "Uploading $filename from firmware directory"
-            gh release upload "${{ steps.create_release.outputs.upload_url }}" "$file" --clobber --repo ${{ github.repository }} --name "$filename"
+            gh release upload "${{ steps.create_release.outputs.upload_url }}" "$file" --clobber --repo ${{ github.repository }}
           done
   
         # Upload each file in firmware-b folder
@@ -168,7 +168,7 @@ jobs:
           for file in $(find firmware-b -type f); do
             filename=$(basename "$file")
             echo "Uploading $filename from firmware-b directory"
-            gh release upload "${{ steps.create_release.outputs.upload_url }}" "$file" --clobber --repo ${{ github.repository }} --name "$filename"
+            gh release upload "${{ steps.create_release.outputs.upload_url }}" "$file" --clobber --repo ${{ github.repository }}
           done
 
       - uses: actions/download-artifact@v4.1.8
