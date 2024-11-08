@@ -55,6 +55,7 @@ jobs:
         run: |
           version=$(awk '/substitutions:/ {found=1} found && /version:/ {print $2; exit}' Integrations/ESPHome/Core.yaml | tr -d '"')
           echo "project_version=$version" >> $GITHUB_OUTPUT
+        shell: bash
 
   build-firmware:
     name: Build And Release
