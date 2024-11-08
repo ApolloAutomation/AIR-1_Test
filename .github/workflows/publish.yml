@@ -152,8 +152,8 @@ jobs:
         id: create_release
         uses: actions/create-release@v1
         with:
-          tag_name: "v${{ needs.read-version.outputs.project_version }}"
-          release_name: "Firmware Release v${{ needs.read-version.outputs.project_version }}"
+          tag_name: "${{ env.project_version }}"
+          release_name: "Firmware Release ${{ env.project_version }}"
           body: "${{ steps.last_pr.outputs.body }}"
           draft: false
           prerelease: false
