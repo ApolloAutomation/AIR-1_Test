@@ -107,6 +107,9 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        
       - uses: actions/download-artifact@v4.1.8
         with:
           name: firmware
@@ -125,10 +128,7 @@ jobs:
           PR_INFO=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
             "https://api.github.com/repos/${{ github.repository }}/pulls?state=closed&sort=updated&direction=desc&per_page=1")
           PR_BODY=$(echo "$PR_INFO" | jq -r '.[0].body')
-          echo "::set-output name=body::$PR_BODY"
-
-      - name: Checkout code
-        uses: actions/checkout@v3
+          echo "$PR_BODY" > pr_body.txt  # Save to a file
 
       - name: Read version from YAML file
         id: read_version
@@ -144,7 +144,7 @@ jobs:
         with:
           tag_name: "${{ env.project_version }}"
           release_name: "Firmware Release ${{ env.project_version }}"
-          body: "${{ steps.last_pr.outputs.body }}"
+          body: "$(cat pr_body.txt)"
           draft: false
           prerelease: false
         env:
