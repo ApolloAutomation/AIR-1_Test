@@ -39,30 +39,11 @@ jobs:
             echo "::set-output name=yaml_changed::false"
           fi
 
-  read-version:
-    name: Read Version from YAML
-    runs-on: ubuntu-latest
-    needs: check-for-yaml
-    if: always()
-    outputs:
-      project_version: ${{ steps.read_version.outputs.project_version }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Read version from YAML file
-        id: read_version
-        run: |
-          version=$(awk '/substitutions:/ {found=1} found && /version:/ {print $2; exit}' Integrations/ESPHome/Core.yaml | tr -d '"')
-          echo "project_version=$version" >> $GITHUB_ENV
-        shell: bash
-
   build-firmware:
     name: Build And Release
     uses: esphome/workflows/.github/workflows/build.yml@main
     needs:
       - check-for-yaml
-      - read-version
     if: needs.check-for-yaml.outputs.yaml_changed == 'true'
     with:
       files: |
@@ -78,7 +59,6 @@ jobs:
     uses: esphome/workflows/.github/workflows/build.yml@main
     needs:
       - check-for-yaml
-      - read-version
     if: needs.check-for-yaml.outputs.yaml_changed == 'true'
     with:
       files: |
@@ -94,7 +74,6 @@ jobs:
     runs-on: ubuntu-latest
     needs:
       - check-for-yaml
-      - read-version
       - build-firmware
       - build-firmware-b
     if: needs.check-for-yaml.outputs.yaml_changed == 'true'
@@ -147,6 +126,16 @@ jobs:
             "https://api.github.com/repos/${{ github.repository }}/pulls?state=closed&sort=updated&direction=desc&per_page=1")
           PR_BODY=$(echo "$PR_INFO" | jq -r '.[0].body')
           echo "::set-output name=body::$PR_BODY"
+
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Read version from YAML file
+        id: read_version
+        run: |
+          version=$(awk '/substitutions:/ {found=1} found && /version:/ {print $2; exit}' Integrations/ESPHome/Core.yaml | tr -d '"')
+          echo "project_version=$version" >> $GITHUB_ENV
+        shell: bash
 
       # Create GitHub Release using the last PR's body
       - name: Create Release
