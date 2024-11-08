@@ -43,7 +43,7 @@ jobs:
     name: Read Version from YAML
     runs-on: ubuntu-latest
     needs: check-for-yaml
-    if: needs.check-for-yaml.outputs.yaml_changed == 'true'
+    if: always()
     outputs:
       project_version: ${{ steps.read_version.outputs.project_version }}
     steps:
@@ -153,8 +153,8 @@ jobs:
         id: create_release
         uses: actions/create-release@v1
         with:
-          tag_name: "${{ needs.read-version.outputs.project_version }}"
-          release_name: "Firmware Release ${{ needs.read-version.outputs.project_version }}"
+          tag_name: "${{ env.project_version }}"
+          release_name: "Firmware Release ${{ env.project_version }}"
           body: "${{ steps.last_pr.outputs.body }}"
           draft: false
           prerelease: false
