@@ -121,6 +121,13 @@ jobs:
           PR_BODY=$(echo "$PR_INFO" | jq -r '.[0].body')
           echo "$PR_BODY" > pr_body.txt  # Save to a file
 
+      - name: Set PR Body as Environment Variable
+        run: |
+          PR_BODY=$(<pr_body.txt)
+          echo "PR_BODY<<EOF" >> $GITHUB_ENV
+          echo "$PR_BODY" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
       - name: Read version from YAML file
         id: read_version
         run: |
@@ -135,11 +142,32 @@ jobs:
         with:
           tag_name: "${{ env.project_version }}"
           release_name: "Firmware Release ${{ env.project_version }}"
-          body: "$(cat pr_body.txt)"
+          body:  "${{ env.PR_BODY }}"
           draft: false
           prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload Firmware Files to Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          for file in $(find firmware -type f); do
+            filename=$(basename "$file")
+            echo "Uploading $filename from firmware directory"
+            gh release upload "${{ steps.create_release.outputs.upload_url }}" "$file" --clobber --repo ${{ github.repository }}
+          done
+  
+        # Upload each file in firmware-b folder
+      - name: Upload Firmware-B Files to Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          for file in $(find firmware-b -type f); do
+            filename=$(basename "$file")
+            echo "Uploading $filename from firmware-b directory"
+            gh release upload "${{ steps.create_release.outputs.upload_url }}" "$file" --clobber --repo ${{ github.repository }}
+          done
 
       - uses: actions/download-artifact@v4.1.8
         with:
