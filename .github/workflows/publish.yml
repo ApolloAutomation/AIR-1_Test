@@ -96,8 +96,6 @@ jobs:
     runs-on: ubuntu-latest
     needs:
       - build-site
-      - build-firmware
-      - build-firmware-b
     if: needs.check-for-yaml.outputs.yaml_changed == 'true' && ${{ github.run_attempt == 1 }}
     permissions:
       contents: write
@@ -168,6 +166,23 @@ jobs:
             echo "Uploading $filename from firmware-b directory"
             gh release upload "${{ steps.create_release.outputs.upload_url }}" "$file" --clobber --repo ${{ github.repository }}
           done
+      - uses: actions/download-artifact@v4.1.8
+        with:
+          name: firmware
+          path: firmware
+      - uses: actions/download-artifact@v4.1.8
+        with:
+          name: firmware-b
+          path: firmware-b
+
+      - name: Copy firmware and manifest
+        run: |-
+          mkdir -p output/firmware
+          cp -r firmware/${{ needs.build-firmware.outputs.version }}/* output/firmware/
+      - name: Copy firmware and manifest
+        run: |-
+          mkdir -p output/firmware-b
+          cp -r firmware-b/${{ needs.build-firmware-b.outputs.version }}/* output/firmware-b/
 
       - uses: actions/download-artifact@v4.1.8
         with:
