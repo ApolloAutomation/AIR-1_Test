@@ -36,12 +36,11 @@ jobs:
           echo "Chosen label: $label"
           echo "chosen_label=$label" >> $GITHUB_OUTPUT
 
-      - name: Apply Single Label
-        if: ${{ steps.find_label.outputs.chosen_label != '' }}
+
+      - name: Add Labels
         uses: actions-ecosystem/action-add-labels@v1
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          labels: ${{ steps.find_label.outputs.chosen_label }}
+          labels:  ${{ steps.find_label.outputs.chosen_label }}
 
 
   ci:
