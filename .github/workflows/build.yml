@@ -26,17 +26,15 @@ jobs:
       - name: Find .yaml Changes in Last PR Merge
         id: check
         run: |
-          # Get the commit hash of the first parent (pre-merge) and the merge commit
           BASE_COMMIT=$(git rev-parse HEAD^1)
           MERGE_COMMIT=$(git rev-parse HEAD)
 
-          # Check if there were any .yaml file changes between the pre-merge and merge commits
           if git diff --name-only $BASE_COMMIT $MERGE_COMMIT | grep -q '\.yaml$'; then
             echo "YAML files changed"
-            echo "::set-output name=yaml_changed::true"
+            echo "yaml_changed=true" >> $GITHUB_OUTPUT
           else
             echo "No YAML files changed"
-            echo "::set-output name=yaml_changed::false"
+            echo "yaml_changed=false" >> $GITHUB_OUTPUT
           fi
 
   build-firmware:
@@ -129,7 +127,7 @@ jobs:
       - name: Read version from YAML file
         id: read_version
         run: |
-          version=$(awk '/substitutions:/ {found=1} found && /version:/ {print $2; exit}' Integrations/ESPHome/Core.yaml | tr -d '"')
+          version=$(awk '/substitutions:/ {found=1} found && /Version:/ {print $2; exit}' Integrations/ESPHome/Core.yaml | tr -d '"')
           echo "project_version=$version" >> $GITHUB_ENV
         shell: bash
 
