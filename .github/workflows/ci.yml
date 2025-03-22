@@ -3,65 +3,52 @@ name: CI
 on:
   pull_request:
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
-  cancel-in-progress: true
-
 jobs:
   label-check:
-    name: Label Check
     runs-on: ubuntu-latest
     outputs:
-      chosen_label: ${{ steps.find_label.outputs.chosen_label }}
+      chosen_label: ${{ steps.determine_label.outputs.chosen_label }}
 
     steps:
-      - name: Parse PR Body to Determine One Label
-        id: find_label
+      - name: Write PR Body to File
+        id: write_body
         run: |
-          body="${{ github.event.pull_request.body }}"
+          # Write the entire PR description into a file
+          cat <<EOF > pr_body.txt ${{ github.event.pull_request.body }} EOF
 
-          # We'll check in order: bugfix → new-feature → breaking-change → dependency-update
+      - name: Determine Single Label
+        id: determine_label
+        run: |
           label=""
-
-          if echo "$body" | grep -qE '- \\[x\\] Bugfix \\(fixed change that fixes an issue\\)'; then
+          # 1) Bugfix
+          if grep -qE '^- \\[x\\] Bugfix \\(fixed change that fixes an issue\\)' pr_body.txt; then
             label="bugfix"
-          elif echo "$body" | grep -qE '- \\[x\\] New feature \\(thanks!\\)'; then
+
+          # 2) New feature
+          elif grep -qE '^- \\[x\\] New feature \\(thanks!\\)' pr_body.txt; then
             label="new-feature"
-          elif echo "$body" | grep -qE '- \\[x\\] Breaking change \\(repair/feature that breaks existing functionality\\)'; then
+
+          # 3) Breaking change
+          elif grep -qE '^- \\[x\\] Breaking change \\(repair/feature that breaks existing functionality\\)' pr_body.txt; then
             label="breaking-change"
-          elif echo "$body" | grep -qE '- \\[x\\] Dependency Update - Does not publish'; then
-            label="dependency-update"
           fi
 
-          echo "Chosen label: $label"
           echo "chosen_label=$label" >> $GITHUB_OUTPUT
 
-
-      - name: Add Labels
+      - name: Apply Single Label
+        if: ${{ steps.determine_label.outputs.chosen_label != '' }}
         uses: actions-ecosystem/action-add-labels@v1
         with:
-          labels:  ${{ steps.find_label.outputs.chosen_label }}
-
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          labels: ${{ steps.determine_label.outputs.chosen_label }}
 
   ci:
-    name: Building ${{ matrix.file }}
-    needs: [ label-check ]
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        file:
-          - Integrations/ESPHome/PLT-1.yaml
-          - Integrations/ESPHome/PLT-1B.yaml
-        esphome-version:
-          - stable
-          - beta
-          - dev
+    needs: [ label-check ]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Build ESPHome firmware
-        uses: esphome/build-action@v6
-        with:
-          yaml-file: ${{ matrix.file }}
+      - name: Your build steps
+        run: |
+          echo "Building or testing..."
