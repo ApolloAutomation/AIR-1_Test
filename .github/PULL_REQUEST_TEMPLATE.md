@@ -13,7 +13,7 @@ Version:
 
 ## Types of changes
 <!--
-  What type of change does your PR introduce to the S0tool?
+  What type of change does your PR introduce?
   NOTE: Please, check only 1! box!
   If your PR requires multiple boxes to be checked, you'll most likely need to
   split it into multiple PRs. This makes things easier and faster to code review.
@@ -22,9 +22,10 @@ Version:
 - [ ] Bugfix (fixed change that fixes an issue)
 - [ ] New feature (thanks!)
 - [ ] Breaking change (repair/feature that breaks existing functionality)
-- [ ] Other
-- [ ] Website of github readme file update
-- [ ] Github workflows
+- [ ] Dependency Update - Does not publish
+- [ ] Other - Does not publish
+- [ ] Website of github readme file update - Does not publish
+- [ ] Github workflows - Does not publish
 
 
 ## Checklist / Checklijst:
@@ -39,7 +40,6 @@ Version:
   - [ ] The code change has not yet been tested
   
 If user-visible functionality or configuration variables are added/modified:
-  - [ ] Documentation added/updated in the readme file
   - [ ] Added/updated documentation for the web page
 
 <!--

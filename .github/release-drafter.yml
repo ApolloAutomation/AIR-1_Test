@@ -13,58 +13,53 @@ categories:
   - title: "🐛 Bug fixes"
     labels:
       - "bugfix"
-  - title: "🚀 Enhancements"
-    labels:
-      - "enhancement"
-      - "refactor"
-      - "performance"
-  - title: "🧰 Maintenance"
-    labels:
-      - "maintenance"
-      - "ci"
-  - title: "📚 Documentation"
-    labels:
-      - "documentation"
+#  - title: "🚀 Enhancements"
+#    labels:
+#      - "enhancement"
+#      - "refactor"
+#      - "performance"
+#  - title: "🧰 Maintenance"
+#    labels:
+#      - "maintenance"
+#      - "ci"
+#  - title: "📚 Documentation"
+#    labels:
+#      - "documentation"
   - title: "⬆️ Dependency updates"
     collapse-after: 5
     labels:
-      - "dependencies"
-  - title: "🚨🚨 Security Fixes 🚨🚨"
-    labels:
-      - "security"
+      - "dependency-update"
+#  - title: "🚨🚨 Security Fixes 🚨🚨"
+#    labels:
+#      - "security"
 
-exclude-labels:
-  - "sync"
 
-version-resolver:
-  major:
-    labels:
-      - "major"
-      - "breaking-change"
-  minor:
-    labels:
-      - "minor"
-      - "new-feature"
-  patch:
-    labels:
-      - "bugfix"
-      - "chore"
-      - "ci"
-      - "dependencies"
-      - "documentation"
-      - "enhancement"
-      - "performance"
-      - "refactor"
-      - "security"
-  default: patch
+include-labels:
+  - "bugfix"
+  - "new-feature"
+  - "breaking-change"
+
 no-changes-template: '- No changes'
+autolabeler:
+  - label: 'bugfix'
+    body:
+      - '/[x] Bugfix (fixed change that fixes an issue)/'
+  - label: 'new-feature'
+    body:
+      - '/[x] New feature (thanks!)/'
+  - label: 'breaking-change'
+    body:
+      - '/[x] Breaking change (repair/feature that breaks existing functionality)/'
+  - label: 'dependency-update'
+    body:
+      - '/[x] Dependency Update - Does not publish/'
+
+      
 template: |
   ## What's Changed
 
   $CHANGES
 
-  **Full Changelog**: https://github.com/ApolloAutomation/AIR-1_Test/compare/$PREVIOUS_TAG...$RESOLVED_VERSION
+  **Full Changelog**: https://github.com/ApolloAutomation/AIR-1_Test/compare/$PREVIOUS_TAG...$RESOLVED_VERSION.1
 
-   _To receive a notification on new releases, click on **Watch** > **Custom** > **Releases** on the top._
-
-   _Be sure to 🌟 this repository for updates!
+   Be sure to 🌟 this repository for updates!
