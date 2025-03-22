@@ -12,15 +12,17 @@ jobs:
     name: Label Check
     runs-on: ubuntu-latest
     outputs:
-      label: ${{ steps.find_label.outputs.label }}
+      chosen_label: ${{ steps.find_label.outputs.chosen_label }}
+
     steps:
-      - name: Determine Single Label
+      - name: Parse PR Body to Determine One Label
         id: find_label
         run: |
           body="${{ github.event.pull_request.body }}"
 
-          # We'll check each pattern in order. The first match wins, ignoring the rest.
+          # We'll check in order: bugfix → new-feature → breaking-change → dependency-update
           label=""
+
           if echo "$body" | grep -qE '- \\[x\\] Bugfix \\(fixed change that fixes an issue\\)'; then
             label="bugfix"
           elif echo "$body" | grep -qE '- \\[x\\] New feature \\(thanks!\\)'; then
@@ -31,21 +33,23 @@ jobs:
             label="dependency-update"
           fi
 
-          echo "Selected label: $label"
-          echo "label=$label" >> $GITHUB_OUTPUT
+          echo "Chosen label: $label"
+          echo "chosen_label=$label" >> $GITHUB_OUTPUT
 
-      - name: Add Single Label if Found
-        if: ${{ steps.find_label.outputs.label != '' }}
+      - name: Apply Single Label
+        if: ${{ steps.find_label.outputs.chosen_label != '' }}
         uses: actions-ecosystem/action-add-labels@v1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          labels: ${{ steps.find_label.outputs.label }}
+          labels: ${{ steps.find_label.outputs.chosen_label }}
+
 
   ci:
-    name: ESPHome Build
+    name: Building ${{ matrix.file }}
+    needs: [ label-check ]
     runs-on: ubuntu-latest
-    needs: label-check
     strategy:
+      fail-fast: false
       matrix:
         file:
           - Integrations/ESPHome/PLT-1.yaml
