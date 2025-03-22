@@ -1,10 +1,11 @@
 substitutions:
-  version: "24.11.9.1"
+  version: "25.3.9.1"
 
 esp32:
   board: esp32-c3-devkitm-1
   framework:
     type: esp-idf
+
 
 api:
   services:
@@ -17,6 +18,7 @@ api:
   reboot_timeout: 0s
   on_client_connected:
     then:
+      - delay: 5s
       - if:
           condition:
             or:
@@ -26,15 +28,13 @@ api:
             - lambda: |- 
                 ESP_LOGW("Apollo", "Preventing Deep Sleep Due To OTA Or Switch");
                 id(deep_sleep_1).prevent_deep_sleep(); 
-          else: 
-            - if:
-                condition:
-                  switch.is_on: sleep_after_connecting
-                then:
-                  - lambda: |-
-                      id(reportAllValues).execute();
-                  - deep_sleep.enter:
-                      id: deep_sleep_1
+          else:
+            - delay: 10s
+            - lambda: |-
+                id(reportAllValues).execute();
+            - delay: 5s
+            - deep_sleep.enter:
+                id: deep_sleep_1
 
 globals:
   - id: cycleCounter
@@ -69,13 +69,12 @@ globals:
 
 captive_portal:
 
-web_server:
-  port: 80
 
 i2c:
   sda: GPIO1
   scl: GPIO0
   id: bus_a
+  frequency: 200kHz
 
 one_wire:
   - platform: gpio
@@ -90,7 +89,7 @@ rtttl:
 
 number:
   - platform: template
-    name: Air Temperature Offset1
+    name: Air Temperature Offset
     id: aht_temperature_offset
     restore_value: true
     initial_value: 0.0
@@ -164,8 +163,7 @@ binary_sensor:
               // Remove Wifi
               id(testCycleCount) = 0;
               id(runTest) = true;
-              id(deep_sleep_run_duration).publish_state(60);
-              id(deep_sleep_sleep_duration).publish_state(60);
+              id(prevent_sleep).turn_on();
               id(factory_reset_switch).turn_on();
             }
             else if (millis() - id(button_press_timestamp) >= 3000) {
@@ -221,6 +219,17 @@ sensor:
     device_class: temperature
     id: soil_temperature
     icon: mdi:thermometer
+    filters:
+      - lambda: |-
+          if (isnan(x)) {
+            return NAN;
+          }
+
+          if (x == 85.0) {
+              return NAN;
+          }
+
+          return x;
     
   - platform: aht10
     id: aht_20
@@ -236,6 +245,7 @@ sensor:
       filters:
         - lambda: return x - id(aht_humidity_offset).state;
     update_interval: 60s
+    setup_priority: -100 # LATE
 
   - platform: adc
     pin: GPIO4
@@ -284,7 +294,6 @@ light:
     id: rgb_light
     name: "RGB Light"
     pin: GPIO3
-    rmt_channel: 0
     default_transition_length: 0s
     chipset: WS2812
     num_leds: 1
@@ -336,13 +345,6 @@ switch:
             then:
               - lambda: |- 
                   id(deep_sleep_1).allow_deep_sleep();
-  - platform: template
-    name: "Sleep After Connecting"
-    id: sleep_after_connecting
-    icon: mdi:sleep
-    restore_mode: RESTORE_DEFAULT_ON
-    optimistic: true
-    entity_category: "config"
 
 script:
   - id: statusCheck
