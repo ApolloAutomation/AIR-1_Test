@@ -127,18 +127,31 @@ jobs:
       - name: Read version from YAML file
         id: read_version
         run: |
-          version=$(awk '/substitutions:/ {found=1} found && /Version:/ {print $2; exit}' Integrations/ESPHome/Core.yaml | tr -d '"')
+          version=$(awk '/substitutions:/ {found=1} found && /version:/ {print $2; exit}' Integrations/ESPHome/Core.yaml | tr -d '"')
           echo "project_version=$version" >> $GITHUB_ENV
+          echo "Detected version: $version"
         shell: bash
 
       - name: 🚀 Run Release Drafter
+        id: run-release-drafter
         uses: release-drafter/release-drafter@v6
         with:
           version: ${{ env.project_version }}
           publish: true
+          tag: ${{ env.project_version }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
+      
+      - name: Upload Release Asset
+        id: upload-release-asset 
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.run-release-drafter.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
+          asset_path: ./my-artifact.zip
+          asset_name: my-artifact.zip
+          asset_content_type: application/zip
 
       # 4) Upload Firmware Files
       - name: Upload Firmware Files
