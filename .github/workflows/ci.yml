@@ -27,13 +27,19 @@ jobs:
         id: determine_label
         run: |
           label=""
-          # In order, we check each pattern. The first match wins.
-          if grep -qE '^- \\[x\\] Bugfix \\(fixed change that fixes an issue\\)' pr_body.txt; then
+          # 1) Bugfix
+          if grep -qE '^- \\[x\\] Bugfix' pr_body.txt; then
             label="bugfix"
-          elif grep -qE '^- \\[x\\] New feature \\(thanks!\\)' pr_body.txt; then
+
+          # 2) New feature
+          elif grep -qE '^- \\[x\\] New feature' pr_body.txt; then
             label="new-feature"
-          elif grep -qE '^- \\[x\\] Breaking change \\(repair/feature that breaks existing functionality\\)' pr_body.txt; then
+
+          # 3) Breaking change
+          elif grep -qE '^- \\[x\\] Breaking change' pr_body.txt; then
             label="breaking-change"
+
+          # 4) Dependency update
           elif grep -qE '^- \\[x\\] Dependency Update - Does not publish' pr_body.txt; then
             label="dependency-update"
           fi
@@ -49,7 +55,7 @@ jobs:
           labels: ${{ steps.determine_label.outputs.chosen_label }}
 
   ci:
-    name: Building ${{ matrix.file }}
+    name: ESPHome Build
     needs: [ label-check ]
     runs-on: ubuntu-latest
     strategy:
@@ -63,10 +69,10 @@ jobs:
           - beta
           - dev
     steps:
-      - name: Checkout source code
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Build ESPHome firmware to verify configuration
+      - name: Build ESPHome firmware
         uses: esphome/build-action@v6
         with:
           yaml-file: ${{ matrix.file }}
