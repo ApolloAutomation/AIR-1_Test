@@ -1,4 +1,6 @@
 name: Publish
+env:
+  DEVICE_NAME: air_test-1
 on:
   push:
     branches:
@@ -139,59 +141,53 @@ jobs:
           version: ${{ env.project_version }}
           publish: true
           tag: ${{ env.project_version }}
+          name: Release ${{ env.project_version }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      
-      - name: Upload Release Asset
-        id: upload-release-asset 
+
+          
+      # 3) Download artifacts from a previous build job
+      - name: Download Firmware
+        uses: actions/download-artifact@v4
+        with:
+          name: firmware
+          path: firmware
+
+      - name: Download Firmware-B
+        uses: actions/download-artifact@v4
+        with:
+          name: firmware-b
+          path: firmware-b
+
+      # 4) Zip up each firmware folder
+      - name: Zip firmware
+        run: |
+          zip -r firmware.zip firmware
+          zip -r firmware-b.zip firmware-b
+
+      # 5) Upload firmware.zip as an asset
+      - name: Upload firmware.zip
+        id: upload-firmware
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ steps.run-release-drafter.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
-          asset_path: ./my-artifact.zip
-          asset_name: my-artifact.zip
+          upload_url: ${{ steps.run-release-drafter.outputs.upload_url }}
+          asset_path: firmware.zip
+          asset_name: firmware.zip
           asset_content_type: application/zip
 
-      # 4) Upload Firmware Files
-      - name: Upload Firmware Files
-        if: always()
+      # 6) Upload firmware-b.zip as another asset
+      - name: Upload firmware-b.zip
+        id: upload-firmware-b
+        uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          # We'll assume your Release Drafter is publishing
-          # a release with tag "vX.Y.Z" = v${{ env.project_version }} (see next step).
-          # 
-          # Use `gh release upload <tag> <files...>` to attach files
-          # to that release. For example:
-
-          tag="v${{ env.project_version }}"  # or just ${{ env.project_version }} if you omit the "v" in your release-drafter config
-
-          # For each file in firmware/ folder
-          for file in $(find firmware -type f); do
-            echo "Uploading $file..."
-            gh release upload "$tag" "$file" \
-              --clobber \
-              --repo ${{ github.repository }}
-          done
-
-          # If you also have "firmware-b" directory:
-          for file in $(find firmware-b -type f); do
-            echo "Uploading $file..."
-            gh release upload "$tag" "$file" \
-              --clobber \
-              --repo ${{ github.repository }}
-          done
-      
-          
-      - uses: actions/download-artifact@v4.1.8
         with:
-          name: firmware
-          path: firmware
-      - uses: actions/download-artifact@v4.1.8
-        with:
-          name: firmware-b
-          path: firmware-b
+          upload_url: ${{ steps.run-release-drafter.outputs.upload_url }}
+          asset_path: firmware-b.zip
+          asset_name: firmware-b.zip
+          asset_content_type: application/zip
 
       - name: Copy firmware and manifest
         run: |-
