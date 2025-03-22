@@ -15,8 +15,8 @@ esphome:
     - priority: 800.0
       then:
         - lambda: |-
-            id(deep_sleep_1).set_run_duration(id(deep_sleep_run_duration).state * 1000);
-            id(deep_sleep_1).set_sleep_duration(id(deep_sleep_sleep_duration).state * 60 * 60 * 1000);
+            id(deep_sleep_1).set_sleep_duration(id(deep_sleep_sleep_duration).state * 60 * 1000);
+            id(deep_sleep_1).set_run_duration(90 * 1000);
         - if:
             condition:
               or:
@@ -38,13 +38,16 @@ esphome:
     - light.turn_off: rgb_light
 
 dashboard_import:
-  package_import_url: github://ApolloAutomation/AIR-1_Test/Integrations/ESPHome/PLT-1.yaml
+  package_import_url: github://ApolloAutomation/PLT-1/Integrations/ESPHome/PLT-1_Minimal.yaml
   import_full_config: false
 
 improv_serial:
 
 esp32_improv:
   authorizer: none
+
+web_server:
+  port: 80
 
 ota:
   - platform: esphome
@@ -61,8 +64,7 @@ update:
   - platform: http_request
     id: firmware_update
     name: Firmware Update
-    source: https://apolloautomation.github.io/AIR-1_Test/firmware/manifest.json
-    update_interval: 5s
+    source: https://apolloautomation.github.io/PLT-1/firmware/manifest.json
 
 wifi:
   on_connect:
