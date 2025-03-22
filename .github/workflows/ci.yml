@@ -8,6 +8,52 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  label-check:
+    name: Label Check
+    runs-on: ubuntu-latest
+    outputs:
+      labels: ${{ steps.find_labels.outputs.labels }}
+    steps:
+      - name: Read PR Body and Determine Labels
+        id: find_labels
+        run: |
+          # We'll collect labels in a space-separated list:
+          labels=""
+
+          body="${{ github.event.pull_request.body }}"
+
+          # 1) Bugfix label
+          if echo "$body" | grep -qE '- \\[x\\] Bugfix \\(fixed change that fixes an issue\\)'; then
+            labels="$labels bugfix"
+          fi
+
+          # 2) New feature
+          if echo "$body" | grep -qE '- \\[x\\] New feature \\(thanks!\\)'; then
+            labels="$labels new-feature"
+          fi
+
+          # 3) Breaking change
+          if echo "$body" | grep -qE '- \\[x\\] Breaking change \\(repair/feature that breaks existing functionality\\)'; then
+            labels="$labels breaking-change"
+          fi
+
+          # 4) Dependency update
+          if echo "$body" | grep -qE '- \\[x\\] Dependency Update - Does not publish'; then
+            labels="$labels dependency-update"
+          fi
+
+          # Trim leading/trailing spaces
+          labels="$(echo "$labels" | xargs)"
+
+          echo "Found labels: '$labels'"
+          echo "labels=$labels" >> $GITHUB_OUTPUT
+
+      - name: Add Labels
+        if: ${{ steps.find_labels.outputs.labels }}
+        uses: actions-ecosystem/action-add-labels@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          labels: ${{ steps.find_labels.outputs.labels }}
   ci:
     name: Building ${{ matrix.file }}
     runs-on: ubuntu-latest
