@@ -1,4 +1,9 @@
 <!--
+From Core.yaml. Should match date YY.MM.DD.# ( Usually # is 1 )
+-->
+Version:
+
+<!--
   You are amazing! Thanks for contributing to our project!
   Please, DO NOT DELETE ANY TEXT from this template! (unless instructed).
 -->
