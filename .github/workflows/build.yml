@@ -135,6 +135,7 @@ jobs:
         uses: release-drafter/release-drafter@v6
         with:
           version: ${{ env.project_version }}
+          publish: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
