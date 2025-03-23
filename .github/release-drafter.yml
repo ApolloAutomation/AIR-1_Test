@@ -40,21 +40,7 @@ include-labels:
   - "breaking-change"
 
 no-changes-template: '- No changes'
-autolabeler:
-  - label: 'bugfix'
-    body:
-      - '/- \\[x\\] Bugfix (fixed change that fixes an issue)/'
-  - label: 'new-feature'
-    body:
-      - '/- \\[x\\] New feature (thanks!)/'
-  - label: 'breaking-change'
-    body:
-      - '/- \\[x\\] Breaking change (repair/feature that breaks existing functionality)/'
-  - label: 'dependency-update'
-    body:
-      - '/- \\[x\\] Dependency Update - Does not publish/'
 
-      
 template: |
   ## What's Changed
 
