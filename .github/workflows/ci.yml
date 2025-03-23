@@ -18,35 +18,41 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # 1) Write the PR body into a file without expansions
       - name: Write PR Body to File
+        shell: bash
         run: |
-          # Disable history expansion so lines with '!' or '- [x]' won't be interpreted
           set +H
           set +o histexpand
-
-          echo "Saving the PR body to pr_body.txt..."
-          # Write the entire multi-line body verbatim
           printf '%s\n' "${{ github.event.pull_request.body }}" > pr_body.txt
 
+      # 2) Debug: Print pr_body.txt (with visible control chars) to confirm EXACT text
+      - name: Debug Print
+        run: |
+          echo "---- pr_body.txt (visibly) ----"
+          cat -A pr_body.txt  # -A shows control chars & trailing spaces
+          echo "--------------------------------"
+
+      # 3) Determine Single Label
       - name: Determine Single Label
         id: determine_label
         run: |
           label=""
 
           # 1) Bugfix
-          if grep -qE '^- \\[x\\] Bugfix' pr_body.txt; then
+          if grep -qE '^- \[x\] Bugfix' pr_body.txt; then
             label="bugfix"
 
           # 2) New feature
-          elif grep -qE '^- \\[x\\] New feature' pr_body.txt; then
+          elif grep -qE '^- \[x\] New feature' pr_body.txt; then
             label="new-feature"
 
           # 3) Breaking change
-          elif grep -qE '^- \\[x\\] Breaking change' pr_body.txt; then
+          elif grep -qE '^- \[x\] Breaking change' pr_body.txt; then
             label="breaking-change"
 
           # 4) Dependency update
-          elif grep -qE '^- \\[x\\] Dependency Update - Does not publish' pr_body.txt; then
+          elif grep -qE '^- \[x\] Dependency Update - Does not publish' pr_body.txt; then
             label="dependency-update"
           fi
 
