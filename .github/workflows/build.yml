@@ -51,6 +51,11 @@ jobs:
       upload_url: ${{ steps.run-release-drafter.outputs.upload_url }}
       body: ${{ steps.run-release-drafter.outputs.body }}
       html_url: ${{ steps.run-release-drafter.outputs.html_url }}
+    permissions:
+      contents: write
+      pages: write
+      id-token: write
+      pull-requests: write
 
     steps:
       - name: Checkout code
