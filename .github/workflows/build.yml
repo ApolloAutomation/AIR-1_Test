@@ -96,6 +96,8 @@ jobs:
     runs-on: ubuntu-latest
     needs:
       - build-site
+      - build-firmware
+      - build-firmware-b
     if: needs.check-for-yaml.outputs.yaml_changed == 'true' && ${{ github.run_attempt == 1 }}
     permissions:
       contents: write
