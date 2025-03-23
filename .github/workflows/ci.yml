@@ -18,15 +18,15 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Write PR Body to File Safely
-        shell: bash
+      - name: Write PR Body to File
         run: |
-          # Disable history expansion so lines starting with '!' won't be interpreted
+          # Disable history expansion so lines with '!' or '- [x]' won't be interpreted
           set +H
           set +o histexpand
 
-          # Write the entire PR body to pr_body.txt via a quoted here-doc
-          cat <<'EOF' > pr_body.txt ${{ github.event.pull_request.body }} EOF
+          echo "Saving the PR body to pr_body.txt..."
+          # Write the entire multi-line body verbatim
+          printf '%s\n' "${{ github.event.pull_request.body }}" > pr_body.txt
 
       - name: Determine Single Label
         id: determine_label
