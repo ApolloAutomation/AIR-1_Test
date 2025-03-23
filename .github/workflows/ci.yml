@@ -19,25 +19,32 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Write PR Body to File Safely
+        shell: bash
         run: |
-          echo "Disabling history expansion so lines starting with '!' aren't interpreted..."
+          # Disable history expansion so lines starting with '!' won't be interpreted
           set +H
-          echo "Saving the PR body to pr_body.txt..."
-          printf '%s\n' "${{ github.event.pull_request.body }}" > pr_body.txt
+          set +o histexpand
+
+          # Write the entire PR body to pr_body.txt via a quoted here-doc
+          cat <<'EOF' > pr_body.txt ${{ github.event.pull_request.body }} EOF
 
       - name: Determine Single Label
         id: determine_label
         run: |
           label=""
+
           # 1) Bugfix
           if grep -qE '^- \\[x\\] Bugfix' pr_body.txt; then
             label="bugfix"
+
           # 2) New feature
           elif grep -qE '^- \\[x\\] New feature' pr_body.txt; then
             label="new-feature"
+
           # 3) Breaking change
           elif grep -qE '^- \\[x\\] Breaking change' pr_body.txt; then
             label="breaking-change"
+
           # 4) Dependency update
           elif grep -qE '^- \\[x\\] Dependency Update - Does not publish' pr_body.txt; then
             label="dependency-update"
