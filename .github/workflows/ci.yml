@@ -18,16 +18,22 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # 1) Capture PR Body as Base64 (so special chars won't break the shell)
       - name: Write PR Body to File
+        env:
+          BODY_B64: ${{ github.event.pull_request.body | toBase64 }}
         run: |
-          # Disable history expansion so lines with '!' or '- [x]' won't be interpreted
+          # Disable history expansion just in case
           set +H
           set +o histexpand
 
-          echo "Saving the PR body to pr_body.txt..."
-          # Write the entire multi-line body verbatim
-          printf '%s\n' "${{ github.event.pull_request.body }}" > pr_body.txt
+          # Decode the base64 into pr_body.txt
+          echo "$BODY_B64" | base64 --decode > pr_body.txt
 
+          echo "Saved PR body to pr_body.txt:"
+          cat pr_body.txt
+
+      # 2) Determine Single Label
       - name: Determine Single Label
         id: determine_label
         run: |
@@ -36,15 +42,12 @@ jobs:
           # 1) Bugfix
           if grep -qE '^- \\[x\\] Bugfix' pr_body.txt; then
             label="bugfix"
-
           # 2) New feature
           elif grep -qE '^- \\[x\\] New feature' pr_body.txt; then
             label="new-feature"
-
           # 3) Breaking change
           elif grep -qE '^- \\[x\\] Breaking change' pr_body.txt; then
             label="breaking-change"
-
           # 4) Dependency update
           elif grep -qE '^- \\[x\\] Dependency Update - Does not publish' pr_body.txt; then
             label="dependency-update"
@@ -53,6 +56,7 @@ jobs:
           echo "Chosen label: $label"
           echo "chosen_label=$label" >> $GITHUB_OUTPUT
 
+      # 3) Apply Single Label (if chosen)
       - name: Apply Single Label
         if: ${{ steps.determine_label.outputs.chosen_label != '' }}
         uses: actions-ecosystem/action-add-labels@v1
